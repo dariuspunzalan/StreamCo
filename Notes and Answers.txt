@@ -30,7 +30,7 @@ VPN and Network:  (StreamCo_env.yml)
 1.	Create a VPC with 2 public subnet and 2 private subnets
 2.	Public subnet default route to Internet Gateway and enable map of public IP.
 3.	Private subnet route thru NAT Gateway for repository access (This should have been local only if repositories are available locally).
-4.	Puppet Server which will be a bastion server as well in public subnet. Jump server to access web servers in private subnet. 
+4.	Puppet Server which will be a bastion server as well in public subnet. Jump server to access web servers in private subnet. Normally puppet server should be in a private secured network but in this case, it has to be accessed from internet as bastion/access server.
 5.	Install and configure puppet server thru UserData and fetching modules from github repository
 6.	Puppet server is configured to autosign all nodes in “lab” environment, this can be improved further by classifying or by use of hostname format  to
     limit the nodes that will be auto signed.
