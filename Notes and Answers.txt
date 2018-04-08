@@ -1,0 +1,77 @@
+Submission for Technical Assessment by StreamCo for DevOps role:
+
+URL: http://streamcoweb-elb-906643835.ap-southeast-2.elb.amazonaws.com/
+
+SSH Access: ssh centos@13.211.219.42
+
+Git Repositories:
+1. Puppet Environment and modules: https://github.com/dariuspunzalan/puppet_lab
+	a.	Puppetmodule – streamcoweb
+	b.	Puppet module – puppetlabs-stdlib
+	c.	Node definition
+	d.	Environment variables
+2. Miscellaneous files and repository: https://github.com/dariuspunzalan/StreamCo
+	a.	CloudFormation Template - StreamCo_env.yml
+	b.	CloudFormation Template – StreamCo_web.yml
+	c.	AWS ssh key (user centos) – StreamCo.pem
+	d.	AWS KeyID and Secret – credentials.csv
+	e.	Puppet manifest – services.pp
+	f.	nginx_conf.erb
+	g.	ssl_conf.erb
+	h.	index.erb
+
+The implementation is with 2 different CloudFormation templates, first to prepare the VPC and Network;  it also includes the puppet server which will be
+used for configuration management.
+
+The other is to provision the web servers, load balancers, auto scaling groups, database and security groups.
+Cross Stack reference is used to query necessary details from other stack to provide flexibility and ease.
+
+VPN and Network:  (StreamCo_env.yml)
+1.	Create a VPC with 2 public subnet and 2 private subnets
+2.	Public subnet default route to Internet Gateway and enable map of public IP.
+3.	Private subnet route thru NAT Gateway for repository access (This should have been local only if repositories are available locally).
+4.	Puppet Server which will be a bastion server as well in public subnet. Jump server to access web servers in private subnet. 
+5.	Install and configure puppet server thru UserData and fetching modules from github repository
+6.	Puppet server is configured to autosign all nodes in “lab” environment, this can be improved further by classifying or by use of hostname format  to
+    limit the nodes that will be auto signed.
+7.	Autosigning will allow new instances created by AutoScaling group to be served by puppet and configured. 
+
+Stack design: (StreamCo_web.yml)
+1.	Web servers in auto-scaling group across 2 Availability Zones in private subnet.
+2.	Auto-scaling group ensures that the instances are created across and balanced between the Availability Zones. HealthCheckType set to ELB to make sure it
+    provides instances on service.
+3.	Security group applied to web servers to accept http and https traffic only from Elastic Load Balancers, ssh is only allowed from VPC CIDR.
+4.	Internet facing Elastic Load Balancer service secured by security group to only accept http and https traffic.
+5.	RDS (MySQL) in private subnet and only accessible from webservers.
+6.	Web server is by NGINX, and PHP-FPM.
+7.	Web server redirection of http access to https via nginx configuration
+8.	Redirection of 404 errors to static 404.html page.
+9.	Use of php gethostname function to display the host serving the request. 
+
+Configuration Management:
+Puppet server installation and configuration is automated. Packages are installed from cloud-init with the use of UserData. The configuration files and puppet
+modules are pulled from github repository when the instance is created.
+Like with the puppet server, the Auto Scaling Launch configuration of the Web servers used cloud init to install puppet agent package and it’s configuration.
+The certificate of the agents are auto-signed from puppet server for all *.test hostname. This can be further limited.
+Web servers are installed with necessary packages and provided with the configurations thru the puppet module streamcoweb. Custom facters are used to provide
+puppet some details from AWS Cloudformation which are necessary for some of the configuration files, such as, ElasticLoadBalancer DNSName, Database address and
+others. Use of ERB template for files for flexibility of the module is also considered.
+
+Database Server:
+Is deployed thru cloudformation from a DB snapshot. The DB instance is provisioned in the private subnets of the VPC for security with access from public is disabled.
+The security group is limiting the access to it from web server ec2 instances only.
+
+How to further automate the management of infrastructure?
+If given unlimited time and resource, the following improvements can be considered:
+1.	Consider the use of Continuous Integration tool like Jenkins to automate the test and verification for fast and continuous deployment of changes.
+2.	Further use of Mapping and Conditions in CloudFormation templates, to provide the flexibility of the template’s use across different environment. For example,
+    set of parameters , domains, and other details vary from environment (test, pre-production, production).
+3.	Use of heiradata for cross environment details and facts.
+4.	To effectively classify the systems roles and function. I believe this is the key for effective implementation of configuration management.
+5.	In this case, further setting of metrics like in cloudwatch for events and an effective setting of auto scaling policies.
+6.	Effective use of tags on resources.
+
+I am more than happy to discuss further the setup and details of my response to your challenge.
+-Darius Punzalan
++61401538717
+
