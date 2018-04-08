@@ -64,12 +64,14 @@ The security group is limiting the access to it from web server ec2 instances on
 How to further automate the management of infrastructure?
 If given unlimited time and resource, the following improvements can be considered:
 1.	Consider the use of Continuous Integration tool like Jenkins to automate the test and verification for fast and continuous deployment of changes.
-2.	Further use of Mapping and Conditions in CloudFormation templates, to provide the flexibility of the template’s use across different environment. For example,
-    set of parameters , domains, and other details vary from environment (test, pre-production, production).
-3.	Use of heiradata for cross environment details and facts.
-4.	To effectively classify the systems roles and function. I believe this is the key for effective implementation of configuration management.
-5.	In this case, further setting of metrics like in cloudwatch for events and an effective setting of auto scaling policies.
-6.	Effective use of tags on resources.
+2.  Modularize puppet implementation by single function or purpose. To have modules be re-useable and assigned to others. A good module is not to do everything for you in one role but
+    to be able to used in other roles as well.
+3.	Use of heiradata for cross role/environment details and facts.
+4.	Further use of Mapping and Conditions in CloudFormation templates, to provide the flexibility of the template’s use across different environment. For example,
+    set of parameters , domains, and other details vary from environment (test, pre-production, production).	
+5.	To effectively classify the systems roles and function. I believe this is the key for effective implementation of configuration management.
+6.	In this case, further setting of metrics like in cloudwatch for events and an effective setting of auto scaling policies.
+7.	Effective use of tags on resources.
 
 I am more than happy to discuss further the setup and details of my response to your challenge.
 -Darius Punzalan
