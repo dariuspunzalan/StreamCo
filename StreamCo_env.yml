@@ -1,0 +1,253 @@
+Description: CloudFormation Template for StreamCo devops test
+# Parameter settings
+Parameters:
+  CidrIPBlock:
+    Description: Cidr IP Block
+    Type: String
+    Default: 192.168.0.0/23
+  PrivateIPAZa:
+    Description: Subnet for Private IP AZa
+    Type: String
+    Default: 192.168.0.0/26
+  PrivateIPAZb:
+    Description: Subnet for Private IP AZb
+    Type: String
+    Default: 192.168.0.64/26
+  PublicIPAZa:
+    Description: Subnet for Public IP AZa
+    Type: String
+    Default: 192.168.1.0/26
+  PublicIPAZb:
+    Description: Subnet for Public IP AZb
+    Type: String
+    Default: 192.168.1.64/26
+    
+  AMIID:
+    Description: AMI ID of EC2 Instance for Web Server
+    Type: String
+    Default: ami-dda36dbf
+    #Default: "ami-43874721"
+  InstanceType:
+    Description: Instance Type to use for Web Server
+    Type: String
+    Default: "t2.micro"
+    
+    
+  KeyPair:
+    Description: KeyPair to be used
+    Type: String
+    Default: StreamCo
+
+# Mapping of variables
+#Mappings:
+
+# Conditions and Logic
+#Conditions:
+
+
+# Resource Definition
+# VPC, Subnet and environment
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref CidrIPBlock
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-VPC"
+
+  IntGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-IGW"
+
+  IntGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref IntGateway
+      VpcId: !Ref VPC
+
+  PrivateSubneta:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Ref PrivateIPAZa
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-Private-AZa"
+      
+  PrivateSubnetb:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: !Ref PrivateIPAZb
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-Private-AZb"
+          
+  PublicSubneta:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Ref PublicIPAZa
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-Public-AZa"
+      
+  PublicSubnetb:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: !Ref PublicIPAZb
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-Public-AZb"
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-Public-Route"
+
+
+  DefaultPublicRoute: 
+    Type: AWS::EC2::Route
+    DependsOn: IntGatewayAttachment
+    Properties: 
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IntGateway
+      
+  PublicSubnetaRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubneta
+
+  PublicSubnetbRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetb
+
+  EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: IntGatewayAttachment
+    Properties:
+      Domain: !Ref VPC
+  
+  NatGateway:
+    Type: "AWS::EC2::NatGateway"
+    DependsOn: EIP
+    Properties: 
+      AllocationId: !GetAtt EIP.AllocationId
+      SubnetId: !Ref PublicSubneta
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PrivateRoute:
+    DependsOn: NatGateway  
+    Type: AWS::EC2::Route  
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway      
+      
+  PrivateRouteTableAssociationA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubneta
+
+  PrivateRouteTableAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnetb
+
+  PuppetSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "${AWS::StackName}-PuppetSG"
+      GroupDescription: Security Group for Puppet server
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 8140
+          ToPort: 8140
+          CidrIp: !Ref CidrIPBlock
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-PuppetSG"
+    
+  PuppetServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AMIID
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyPair
+      SecurityGroupIds: [ !Ref PuppetSG ]
+      SubnetId: !Ref PublicSubneta
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -x
+          TMPDIR="/root/temp"
+          hostname puppet.test
+          echo "puppet.test" > /etc/hostname
+          mkdir -p $TMPDIR
+          sudo rpm -Uvh https://yum.puppet.com/puppet5/puppet5-release-el-7.noarch.rpm
+          yum install -y unzip puppetserver curl git
+          sed -i 's/2g/512m/g' /etc/sysconfig/puppetserver
+          echo "*.test" >/etc/puppetlabs/puppet/autosign.conf
+          mkdir -p /etc/puppetlabs/code/environments/lab
+          git clone https://github.com/dariuspunzalan/puppet_lab.git /etc/puppetlabs/code/environments/lab/
+          service puppetserver start
+          
+Outputs:
+  MyVPC:
+    Value: !Ref VPC
+    Export:
+      Name: !Sub "${AWS::StackName}-VPCID"
+
+  MyPriv1:
+    Value: !Ref PrivateSubneta
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivAZa"
+
+  MyPriv2:
+    Value: !Ref PrivateSubnetb
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivAZb"
+
+  MyPub1:
+    Value: !Ref PublicSubneta
+    Export:
+      Name: !Sub "${AWS::StackName}-PubAZa"
+
+  MyPub2:
+    Value: !Ref PublicSubnetb
+    Export:
+      Name: !Sub "${AWS::StackName}-PubAZb"
+  PuppetIP:
+    Value: !GetAtt PuppetServer.PrivateIp
+    Export:
+      Name: PuppetServerIP
