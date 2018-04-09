@@ -1,0 +1,77 @@
+Curl output showing redirection of access to site using http to https
+
+[dpunzalan@darius ~]$ curl -kviL http://streamcoweb-elb-906643835.ap-southeast-2.elb.amazonaws.com/
+* About to connect() to streamcoweb-elb-906643835.ap-southeast-2.elb.amazonaws.com port 80 (#0)
+*   Trying 52.65.152.51...
+* Connected to streamcoweb-elb-906643835.ap-southeast-2.elb.amazonaws.com (52.65.152.51) port 80 (#0)
+> GET / HTTP/1.1
+> User-Agent: curl/7.29.0
+> Host: streamcoweb-elb-906643835.ap-southeast-2.elb.amazonaws.com
+> Accept: */*
+> 
+< HTTP/1.1 301 Moved Permanently
+HTTP/1.1 301 Moved Permanently
+< Content-Type: text/html
+Content-Type: text/html
+< Date: Mon, 09 Apr 2018 04:00:58 GMT
+Date: Mon, 09 Apr 2018 04:00:58 GMT
+< Location: https://StreamCoWeb-ELB-906643835.ap-southeast-2.elb.amazonaws.com/
+Location: https://StreamCoWeb-ELB-906643835.ap-southeast-2.elb.amazonaws.com/
+< Server: nginx/1.12.2
+Server: nginx/1.12.2
+< Content-Length: 185
+Content-Length: 185
+< Connection: keep-alive
+Connection: keep-alive
+
+< 
+* Ignoring the response-body
+* Connection #0 to host streamcoweb-elb-906643835.ap-southeast-2.elb.amazonaws.com left intact
+* Issue another request to this URL: 'https://StreamCoWeb-ELB-906643835.ap-southeast-2.elb.amazonaws.com/'
+* About to connect() to StreamCoWeb-ELB-906643835.ap-southeast-2.elb.amazonaws.com port 443 (#1)
+*   Trying 13.210.92.235...
+* Connected to StreamCoWeb-ELB-906643835.ap-southeast-2.elb.amazonaws.com (13.210.92.235) port 443 (#1)
+* Initializing NSS with certpath: sql:/etc/pki/nssdb
+* skipping SSL peer certificate verification
+* SSL connection using TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+* Server certificate:
+* 	subject: E=dhpunz@gmail.com,CN=*.ap-southeast-2.elb.amazonaws.com,O=Test Lab,L=Sydney,ST=NSW,C=AU
+* 	start date: Apr 08 03:51:19 2018 GMT
+* 	expire date: Apr 08 03:51:19 2019 GMT
+* 	common name: *.ap-southeast-2.elb.amazonaws.com
+* 	issuer: E=dhpunz@gmail.com,CN=*.ap-southeast-2.elb.amazonaws.com,O=Test Lab,L=Sydney,ST=NSW,C=AU
+> GET / HTTP/1.1
+> User-Agent: curl/7.29.0
+> Host: StreamCoWeb-ELB-906643835.ap-southeast-2.elb.amazonaws.com
+> Accept: */*
+> 
+< HTTP/1.1 200 OK
+HTTP/1.1 200 OK
+< Content-Type: text/html
+Content-Type: text/html
+< Date: Mon, 09 Apr 2018 04:00:58 GMT
+Date: Mon, 09 Apr 2018 04:00:58 GMT
+< Server: nginx/1.12.2
+Server: nginx/1.12.2
+< X-Powered-By: PHP/5.4.16
+X-Powered-By: PHP/5.4.16
+< Content-Length: 754
+Content-Length: 754
+< Connection: keep-alive
+Connection: keep-alive
+
+< 
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+    <head>
+        <title>Test Web portal for Stream Co Lab</title>
+    </head>
+
+    <body>
+	<h1 align="center">
+	This portal is served by ip-192-168-0-48.test</h1><br /><br /><br> Table: employees from 'LabDB' Database</br><table border='1'> <tr>
+	<th>FirstName</th><th>LastName</th><th>PhoneNumber</th><th>Email</th></tr><tr><td>Ana</td><td>Punzalan</td><td>0401222345</td><td>ana@testmail.com</td></tr><tr><td>Joe</td><td>Johnson</td><td>0401999999</td><td>joe@testmail.com</td></tr><tr><td>Clark</td><td>James</td><td>043323434</td><td>clark@testmail.com</td></tr></table>    </body>
+</html>
+
+* Connection #1 to host StreamCoWeb-ELB-906643835.ap-southeast-2.elb.amazonaws.com left intact
