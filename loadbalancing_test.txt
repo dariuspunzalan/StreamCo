@@ -1,0 +1,10 @@
+Showing traffic is load balanced between 2 web server backend.
+
+[dpunzalan@darius ~]$ for try in 1 2 3 4
+> do
+> curl -kvi https://StreamCoWeb-ELB-906643835.ap-southeast-2.elb.amazonaws.com 2>/dev/null|grep "portal is served by"
+> done
+	This portal is served by ip-192-168-0-48.test</h1><br /><br /><br> Table: employees from 'LabDB' Database</br><table border='1'> <tr>
+	This portal is served by ip-192-168-0-100.test</h1><br /><br /><br> Table: employees from 'LabDB' Database</br><table border='1'> <tr>
+	This portal is served by ip-192-168-0-48.test</h1><br /><br /><br> Table: employees from 'LabDB' Database</br><table border='1'> <tr>
+	This portal is served by ip-192-168-0-100.test</h1><br /><br /><br> Table: employees from 'LabDB' Database</br><table border='1'> <tr>
